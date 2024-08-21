@@ -6,14 +6,15 @@ print(jpype.getDefaultJVMPath())
 jpype.startJVM("-Xmx128g", classpath=['./optimaltransport.jar'])
 from optimaltransport import Mapping
 
-def RPW(batch_size=1, C=None, delta=0.001, k=1, p=2):
+def RPW(C=None, delta=0.001, k=1, p=1):
     # delta : acceptable additive error
     # q_idx : index to get returned values
-    X = np.array([1/batch_size for _ in range(batch_size)])
-    Y = np.array([1/batch_size for _ in range(batch_size)])
+    x = C.shape[0]
+    y = C.shape[1]
+    X = np.array([1/x for _ in range(x)])
+    Y = np.array([1/y for _ in range(y)])
     dist = np.array(C.tolist())
     nz = len(X)
-    # dist = dist**p
     alphaa = 4.0*np.max(dist)/delta
     gtSolver = Mapping(nz, X, Y, dist, delta)
     APinfo = np.array(gtSolver.getAPinfo()) # augmenting path info
@@ -48,7 +49,6 @@ def RPW(batch_size=1, C=None, delta=0.001, k=1, p=2):
     flowProgress = (cumFlow)/(1.0 * totalFlow)
 
     d_cost = (1 - flowProgress) - cumCost
-    # print(d_cost)
     try:
         d_ind_a = np.nonzero(d_cost<=0)[0][0]-1
     except:

@@ -13,6 +13,7 @@ radius = 0.01  # radius of the disks drawn for each center
 max_iters = 500  # maximum number of sinkhorn iterations
 reg = 0.05  # regularization parameter in sinkhorn algorithm
 max_alpha = 0.4  # maximum amount of noise in each sample
+min_alpha = 0.2
 epoch_num = 200
 lr = 0.1  # learning rate
 
@@ -22,7 +23,7 @@ with open("plots/index.txt", 'r') as f:
     index = int(f.read())
 with open("plots/index.txt", 'w') as f:
     f.write(str(index + 1))
-path += str(index) + "/"
+path += str(index) + "_ot_lr" + str(lr) + "/"
 if not os.path.exists(path):
     os.makedirs(path, exist_ok=True)
 
@@ -60,7 +61,7 @@ def sample(n):
     samples = []
     cov = [[0.01, 0], [0, 0.01]]
 
-    alpha = random.random() * max_alpha  # amount of noise in the samples
+    alpha = random.random() * (max_alpha - min_alpha) + min_alpha  # amount of noise in the samples
     noise_mean_x = random.random()
     noise_mean_y = random.random()
 
