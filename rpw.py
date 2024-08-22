@@ -1,10 +1,10 @@
-import numpy as np
-import jpype
-import jpype.imports
-from jpype.types import *
+import numpy as np # type: ignore
+import jpype # type: ignore
+import jpype.imports # type: ignore
+from jpype.types import * # type: ignore
 print(jpype.getDefaultJVMPath())
 jpype.startJVM("-Xmx128g", classpath=['./optimaltransport.jar'])
-from optimaltransport import Mapping
+from optimaltransport import Mapping # type: ignore
 
 def RPW(C=None, delta=0.001, k=1, p=1):
     # delta : acceptable additive error

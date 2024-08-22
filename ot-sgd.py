@@ -1,7 +1,6 @@
 import math
-import torch
+import torch # type: ignore
 import os
-import matplotlib.pyplot as plt
 import random
 
 from utils import sample, sinkhorn, draw

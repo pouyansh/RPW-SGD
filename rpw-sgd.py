@@ -1,5 +1,5 @@
 import math
-import torch
+import torch # type: ignore
 import os
 import random
 

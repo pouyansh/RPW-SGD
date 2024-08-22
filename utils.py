@@ -1,7 +1,7 @@
 import random
-import numpy as np
-import torch
-import matplotlib.pyplot as plt
+import numpy as np # type: ignore
+import torch # type: ignore
+import matplotlib.pyplot as plt # type: ignore
 
 max_alpha = 0.3  # maximum amount of noise in each sample
 min_alpha = 0.1
