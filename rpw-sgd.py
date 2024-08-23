@@ -73,7 +73,7 @@ for i in range(epoch_num):
     out_centers = out_centers + lr * torch.div(arrows.T, out_masses).T
 
     out_masses = torch.sum(plan, 1)
-    out_masses[torch.logical_and(out_masses>=0, out_masses<=1e-6)] = 1e-9
+    out_masses[torch.logical_and(out_masses>=0, out_masses<=1e-9)] = 1e-9
     out_masses = out_masses / torch.sum(out_masses)
 
     if i % 4 == 0:
