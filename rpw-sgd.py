@@ -12,10 +12,10 @@ rows_num = 30  # the code will generate a square of rows_num x rows_num and then
 output_size = int(math.pow(rows_num, dim))
 sample_size = 900
 radius = 0.01  # radius of the disks drawn for each center
-epoch_num = 100
+epoch_num = 400
 lr = 0.1  # learning rate
 k = 1
-p = 1
+p = 2
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 
 # Creating folder to save figures
@@ -73,8 +73,8 @@ for i in range(epoch_num):
     out_centers = out_centers + lr * torch.div(arrows.T, out_masses).T
 
     out_masses = torch.sum(plan, 1)
-    out_masses[torch.logical_and(out_masses>=0, out_masses<=1e-6)] = 1e-6
+    out_masses[torch.logical_and(out_masses>=0, out_masses<=1e-6)] = 1e-9
     out_masses = out_masses / torch.sum(out_masses)
 
-    if i % 1 == 0:
+    if i % 4 == 0:
         draw(out_centers, out_masses, prev_out_centers, samples, i + 1, path)

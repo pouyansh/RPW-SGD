@@ -3,8 +3,8 @@ import numpy as np # type: ignore
 import torch # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
-max_alpha = 0.4  # maximum amount of noise in each sample
-min_alpha = 0.2
+max_alpha = 0.2  # maximum amount of noise in each sample
+min_alpha = 0.1
 
 # This method draws n samples from the real distribution contaminated with alpha fraction of noise
 def sample(mean_x, mean_y, n):
