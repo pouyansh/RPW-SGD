@@ -55,4 +55,4 @@ for i in range(epoch_num):
     out_centers = out_centers + lr * arrows
 
     if i % 4 == 0:
-        draw(out_centers, prev_out_centers, samples, i, path)
+        draw(out_centers, a, prev_out_centers, samples, i, path)

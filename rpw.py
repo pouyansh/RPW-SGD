@@ -6,12 +6,11 @@ print(jpype.getDefaultJVMPath())
 jpype.startJVM("-Xmx128g", classpath=['./optimaltransport.jar'])
 from optimaltransport import Mapping # type: ignore
 
-def RPW(C=None, delta=0.001, k=1, p=1):
+def RPW(A, C=None, delta=0.001, k=1, p=1):
     # delta : acceptable additive error
     # q_idx : index to get returned values
-    x = C.shape[0]
     y = C.shape[1]
-    X = np.array([1/x for _ in range(x)])
+    X = np.array(A)
     Y = np.array([1/y for _ in range(y)])
     dist = np.array(C.tolist())
     nz = len(X)
