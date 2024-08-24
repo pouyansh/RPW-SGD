@@ -2,10 +2,10 @@ import math
 import torch # type: ignore
 import os
 import random
-import ot
+import ot # type: ignore
 
 from rpw import RPW
-from utils import sample, draw, sinkhorn
+from utils import sample, draw
 
 dim = 2
 rows_num = 20  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates

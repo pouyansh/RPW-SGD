@@ -32,16 +32,6 @@ def sample(mean_x, mean_y, n):
     return torch.FloatTensor(samples)
 
 
-def sinkhorn(a, b, C, reg=0.05, max_iters=400):
-    K = torch.exp(-C/reg)
-    u = torch.clone(a)
-    v = torch.clone(b)
-    for _ in range(max_iters):
-        u = a / torch.matmul(K,v)
-        v = b / torch.matmul(K.T,u)
-    return torch.matmul(torch.diag_embed(u), torch.matmul(K, torch.diag_embed(v)))
-
-
 # Drawing the maintained output distribution
 def draw(centers, masses, prev_centers, real_samples, epoch, path, radius=0.03):
     _, ax = plt.subplots()
