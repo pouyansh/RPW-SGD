@@ -3,3 +3,4 @@ matplotlib
 torch
 jpype1
 POT
+keras

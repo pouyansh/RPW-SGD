@@ -3,9 +3,10 @@ import torch # type: ignore
 import os
 import random
 import ot # type: ignore
+import matplotlib.pyplot as plt # type: ignore
 
 from rpw import RPW
-from utils import sample, draw
+from utils import sample, draw, draw_samples
 
 dim = 2
 rows_num = 20  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
@@ -40,13 +41,17 @@ mean_x = random.random() * (1 - 2 * margin) + margin
 mean_y = random.random() * (1 - 2 * margin) + margin
 print(mean_x, mean_y)
 
-draw(out_centers, out_masses, [], [], 0, path)
+_, ax = plt.subplots()
+draw(out_centers, out_masses, ax, 0, path)
 
 for i in range(epoch_num):
+    plt.cla()
+    _, ax = plt.subplots()
     arrows = torch.zeros((output_size, dim))
     plans = torch.zeros((output_size, sample_size))
     for _ in range(batch_size):
         samples = sample(mean_x, mean_y, sample_size)
+        draw_samples(samples, ax)
 
         cost_matrix = torch.cdist(out_centers, samples, p=2)
         cost_matrix = torch.pow(cost_matrix, p)
@@ -76,8 +81,6 @@ for i in range(epoch_num):
     plans = plans / batch_size
     arrows = arrows / batch_size
 
-    prev_out_centers = torch.clone(out_centers)
-
     out_centers = out_centers + lr * torch.div(arrows.T, out_masses).T
 
     out_masses = torch.sum(plans, 1)
@@ -85,4 +88,4 @@ for i in range(epoch_num):
     out_masses = out_masses / torch.sum(out_masses)
 
     if i % 1 == 0:
-        draw(out_centers, out_masses, prev_out_centers, samples, i + 1, path)
+        draw(out_centers, out_masses, ax, i + 1, path)
