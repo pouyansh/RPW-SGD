@@ -7,7 +7,7 @@ from keras.datasets import mnist # type: ignore
 max_alpha = 0.25  # maximum amount of noise in each sample
 min_alpha = 0.05
 
-digit = 3
+digit = 6
 from_mnist = True
 
 # This method draws n samples from the real distribution contaminated with alpha fraction of noise
@@ -47,15 +47,15 @@ def sample(mean_x, mean_y, n):
 # Drawing the maintained output distribution
 def draw_samples(real_samples, ax, radius=0.01):
     for center in real_samples:
-        circle = plt.Circle((center[0], center[1]), radius, color='r', alpha=0.1)
+        circle = plt.Circle((center[1], 1 - center[0]), radius, color='r', alpha=0.03)
         ax.add_patch(circle)
 
 
 # Drawing the maintained output distribution
 def draw(centers, masses, ax, epoch, path, radius=0.03):
-    temp_masses = masses / (2 * torch.max(masses))
+    temp_masses = masses * 0.75 / torch.max(masses)
     for i in range(centers.shape[0]):
-        circle = plt.Circle((centers[i][0], centers[i][1]), radius, color='k', alpha=float(temp_masses[i]))
+        circle = plt.Circle((centers[i][1], 1 - centers[i][0]), radius, color='k', alpha=float(temp_masses[i]))
         ax.add_patch(circle)
     plt.savefig(path + "fig" + str(epoch) + ".png")
     plt.close()

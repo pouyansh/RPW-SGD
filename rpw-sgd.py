@@ -9,15 +9,15 @@ from rpw import RPW
 from utils import sample, draw, draw_samples
 
 dim = 2
-rows_num = 20  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
+rows_num = 30  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
-sample_size = 400
+sample_size = 900
 epoch_num = 80
 lr = 0.1  # learning rate
-k = 1
+k = 0.5
 p = 1
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
-batch_size = 10
+batch_size = 5
 
 # Creating folder to save figures
 path = "plots/run_"
@@ -39,7 +39,6 @@ out_masses = torch.ones(output_size) / output_size
 # distribution to learn
 mean_x = random.random() * (1 - 2 * margin) + margin
 mean_y = random.random() * (1 - 2 * margin) + margin
-print(mean_x, mean_y)
 
 _, ax = plt.subplots()
 draw(out_centers, out_masses, ax, 0, path)
