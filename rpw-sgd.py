@@ -14,8 +14,8 @@ output_size = int(math.pow(rows_num, dim))
 sample_size = 900
 epoch_num = 80
 lr = 0.1  # learning rate
-k = 0.5
-p = 1
+k = 3
+p = 2
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 batch_size = 5
 

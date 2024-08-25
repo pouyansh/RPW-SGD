@@ -14,7 +14,7 @@ sample_size = 900
 epoch_num = 80
 lr = 0.1  # learning rate
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
-p = 1
+p = 2
 batch_size = 5
 
 path = "plots/run_"
