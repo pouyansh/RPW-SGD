@@ -52,7 +52,7 @@ def draw_samples(real_samples, ax, radius=0.01):
 
 
 # Drawing the maintained output distribution
-def draw(centers, masses, ax, epoch, path, radius=0.03):
+def draw(centers, masses, ax, epoch, path, radius=0.02):
     temp_masses = masses * 0.75 / torch.max(masses)
     for i in range(centers.shape[0]):
         circle = plt.Circle((centers[i][1], 1 - centers[i][0]), radius, color='k', alpha=float(temp_masses[i]))
