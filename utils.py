@@ -4,6 +4,7 @@ import torch # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 import keras # type: ignore
 import os
+import ot # type: ignore
 
 max_alpha = 0.25  # maximum amount of noise in each sample
 min_alpha = 0.05
@@ -18,10 +19,13 @@ label = 7
 from_cifar10 = False
 
 # This method draws n samples from the real distribution contaminated with alpha fraction of noise
-def sample(mean_x, mean_y, n):
+def sample(mean_x, mean_y, n, clean=False):
     samples = []
 
-    alpha = random.random() * (max_alpha - min_alpha) + min_alpha  # amount of noise in the samples
+    if clean:
+        alpha = 0
+    else:
+        alpha = random.random() * (max_alpha - min_alpha) + min_alpha  # amount of noise in the samples
 
     X = None
     if from_mnist or from_cifar10:
@@ -68,6 +72,19 @@ def draw(centers, masses, ax, epoch, path, radius=0.02):
         ax.add_patch(circle)
     plt.savefig(path + "fig" + str(epoch) + ".png")
     plt.close()
+
+
+def compute_OT_error(out_masses, out_centers, mean_x, mean_y, n, sample_num=200):
+    # Computing the accuracy
+    total_error = 0
+    for _ in range(sample_num):
+        samples = sample(mean_x, mean_y, n, clean=True)
+        cost_matrix = torch.cdist(out_centers, samples, p=2)
+        b = [1 / n for _ in range(n)]
+        b = torch.FloatTensor(b)
+        total_error += ot.emd2(out_masses, b, cost_matrix)
+    avg_error = total_error / sample_num
+    return avg_error
 
 
 X_train = None

@@ -6,15 +6,15 @@ import ot # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
 from rpw import RPW
-from utils import sample, draw, draw_samples
+from utils import sample, draw, draw_samples, compute_OT_error
 
 dim = 2
 rows_num = 30  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
 sample_size = 900
-epoch_num = 80
+epoch_num = 300
 lr = 0.1  # learning rate
-k = 0.1
+k = 1
 p = 2
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 batch_size = 5
@@ -48,13 +48,14 @@ _, ax = plt.subplots()
 draw(out_centers, out_masses, ax, 0, path)
 
 for i in range(epoch_num):
-    plt.cla()
+    plt.close()
     _, ax = plt.subplots()
     arrows = torch.zeros((output_size, dim))
     plans = torch.zeros((output_size, sample_size))
     for _ in range(batch_size):
         samples = sample(mean_x, mean_y, sample_size)
-        draw_samples(samples, ax)
+        if i % 3 == 0:
+            draw_samples(samples, ax)
 
         cost_matrix = torch.cdist(out_centers, samples, p=2)
         cost_matrix = torch.pow(cost_matrix, p)
@@ -73,7 +74,6 @@ for i in range(epoch_num):
         cost_matrix_rpw = torch.cat((cost_matrix, zeros_cols), dim=-1)
         cost_matrix_rpw = torch.cat((cost_matrix_rpw, zeros_rows), dim=0)
 
-        # plan = sinkhorn(a, b, cost_matrix)
         plan = ot.emd(a, b, cost_matrix_rpw)
         plan = plan[:-1, :-1]  # removing the fake vertices
 
@@ -99,5 +99,11 @@ for i in range(epoch_num):
         out_masses[torch.logical_and(out_masses>=0, out_masses<=1e-9)] = 1e-9
         out_masses = out_masses / torch.sum(out_masses)
 
-    if i % 1 == 0:
+    if i % 3 == 0:
         draw(out_centers, out_masses, ax, i + 1, path)
+
+with open(path + "results.txt", 'w') as f:
+    f.write(str(compute_OT_error(out_masses, out_centers, mean_x, mean_y, sample_size)))
+    f.write("\n")
+    f.write(out_centers)
+    f.write("\n")
