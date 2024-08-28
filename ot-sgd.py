@@ -71,5 +71,5 @@ out_masses = torch.ones(out_centers.shape[0]) / out_centers.shape[0]
 with open(path + "results.txt", 'w') as f:
     f.write(str(compute_OT_error(out_masses, out_centers, mean_x, mean_y, sample_size)))
     f.write("\n")
-    f.write(out_centers)
+    f.write(str(out_centers))
     f.write("\n")

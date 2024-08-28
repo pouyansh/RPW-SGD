@@ -15,7 +15,7 @@ sample_size = 900
 epoch_num = 300
 lr = 0.1  # learning rate
 k = 1
-p = 2
+p = 1
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 batch_size = 5
 no_mass_reduce = True
@@ -105,5 +105,5 @@ for i in range(epoch_num):
 with open(path + "results.txt", 'w') as f:
     f.write(str(compute_OT_error(out_masses, out_centers, mean_x, mean_y, sample_size)))
     f.write("\n")
-    f.write(out_centers)
+    f.write(str(out_centers))
     f.write("\n")
