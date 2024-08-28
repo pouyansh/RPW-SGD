@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt # type: ignore
 from utils import sample, draw, draw_samples
 
 dim = 2
-rows_num = 30  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
+rows_num = 20  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
-sample_size = 900
+sample_size = 400
 epoch_num = 80
-lr = 0.1  # learning rate
+lr = 0.2  # learning rate
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 p = 2
 batch_size = 5

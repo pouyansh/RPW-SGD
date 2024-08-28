@@ -2,28 +2,35 @@ import random
 import numpy as np # type: ignore
 import torch # type: ignore
 import matplotlib.pyplot as plt # type: ignore
-from keras.datasets import mnist # type: ignore
+import keras # type: ignore
+import os
 
 max_alpha = 0.25  # maximum amount of noise in each sample
 min_alpha = 0.05
 
+cov = [[0.01, 0], [0, 0.01]]
+noise_cov = [[0.05, 0], [0, 0.05]]
+
 digit = 6
 from_mnist = True
+
+label = 7
+from_cifar10 = False
 
 # This method draws n samples from the real distribution contaminated with alpha fraction of noise
 def sample(mean_x, mean_y, n):
     samples = []
-    cov = [[0.01, 0], [0, 0.01]]
 
     alpha = random.random() * (max_alpha - min_alpha) + min_alpha  # amount of noise in the samples
 
-    X = random.choice(X_train)
-    X = X / np.sum(X)
+    X = None
+    if from_mnist or from_cifar10:
+        X = random.choice(X_train)
+        X = X / np.sum(X)
 
     # random noise distribution
     noise_mean_x = random.random()
     noise_mean_y = random.random()
-    noise_cov = [[0.05, 0], [0, 0.05]]
 
     for _ in range(n):
         p = random.random()
@@ -34,6 +41,8 @@ def sample(mean_x, mean_y, n):
                     flat = X.flatten()
                     sample_index = np.random.choice(a=flat.size, p=flat)
                     point = np.divide(np.unravel_index(sample_index, X.shape), X.shape[0])
+                elif from_cifar10:
+                    flat = X.flatten()
                 else:
                     point = np.random.multivariate_normal([mean_x, mean_y], cov, 1)[0]
         else:
@@ -60,6 +69,19 @@ def draw(centers, masses, ax, epoch, path, radius=0.02):
     plt.savefig(path + "fig" + str(epoch) + ".png")
     plt.close()
 
-(X_train, labels), (_, _) = mnist.load_data()
-train_filter = np.where((labels == digit))
-X_train = X_train[train_filter]
+
+X_train = None
+if from_mnist:
+    (X_train, labels), (_, _) = keras.datasets.mnist.load_data()
+    train_filter = np.where((labels == digit))
+    X_train = X_train[train_filter]
+elif from_cifar10:
+    if os.path.exists('./data/cifar10.npy'):
+        X_train = np.load('./data/cifar10.npy')
+        labels = np.load('./data/cifar10_labels.npy').ravel().astype(int)
+    else:
+        (X_train, labels), (_, _) = keras.datasets.cifar10.load_data()
+        np.save('./data/cifar10.npy', X_train)
+        np.save('./data/cifar10_labels.npy', labels)
+    train_filter = np.where((labels == label))
+    X_train = X_train[train_filter]
