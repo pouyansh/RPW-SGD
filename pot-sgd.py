@@ -17,8 +17,9 @@ lr = 0.1  # learning rate
 p = 2
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 batch_size = 5
-alpha = 0.15  # the parameter in alpha-partial
+alpha = 0.2  # the parameter in alpha-partial
 no_mass_reduce = True 
+draw_interval = 20
 
 # Creating folder to save figures
 path = "plots/run_"
@@ -54,7 +55,7 @@ for i in range(epoch_num):
     plans = torch.zeros((output_size, sample_size))
     for _ in range(batch_size):
         samples = sample(mean_x, mean_y, sample_size)
-        if i % 3 == 0:
+        if (i+1) % draw_interval == 0:
             draw_samples(samples, ax)
 
         cost_matrix = torch.cdist(out_centers, samples, p=2)
@@ -96,11 +97,13 @@ for i in range(epoch_num):
     out_masses[torch.logical_and(out_masses>=0, out_masses<=1e-9)] = 1e-9
     out_masses = out_masses / torch.sum(out_masses)
 
-    if i % 3 == 0:
+    if (i+1) % draw_interval == 0:
         draw(out_centers, out_masses, ax, i + 1, path)
 
 with open(path + "results.txt", 'w') as f:
     f.write(str(compute_OT_error(out_masses, out_centers, mean_x, mean_y, sample_size)))
     f.write("\n")
-    f.write(str(out_centers))
     f.write("\n")
+    for center in out_centers:
+        f.write(str(float(center[0])) + " " + str(float(center[1])))
+        f.write("\n")

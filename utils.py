@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt # type: ignore
 import keras # type: ignore
 import os
 import ot # type: ignore
+import math
 
-max_alpha = 0.25  # maximum amount of noise in each sample
-min_alpha = 0.05
+max_alpha = 0.4  # maximum amount of noise in each sample
+min_alpha = 0
 
 cov = [[0.01, 0], [0, 0.01]]
 noise_cov = [[0.05, 0], [0, 0.05]]
@@ -80,9 +81,10 @@ def compute_OT_error(out_masses, out_centers, mean_x, mean_y, n, sample_num=200)
     for _ in range(sample_num):
         samples = sample(mean_x, mean_y, n, clean=True)
         cost_matrix = torch.cdist(out_centers, samples, p=2)
+        cost_matrix = torch.pow(cost_matrix, 2)
         b = [1 / n for _ in range(n)]
         b = torch.FloatTensor(b)
-        total_error += ot.emd2(out_masses, b, cost_matrix)
+        total_error += math.sqrt(float(ot.emd2(out_masses, b, cost_matrix)))
     avg_error = total_error / sample_num
     return avg_error
 

@@ -14,11 +14,12 @@ output_size = int(math.pow(rows_num, dim))
 sample_size = 900
 epoch_num = 300
 lr = 0.1  # learning rate
-k = 1
-p = 1
+k = 0.2
+p = 2
 margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 batch_size = 5
 no_mass_reduce = True
+draw_interval = 20
 
 # Creating folder to save figures
 path = "plots/run_"
@@ -33,6 +34,32 @@ if no_mass_reduce:
 path += "/"
 if not os.path.exists(path):
     os.makedirs(path, exist_ok=True)
+
+
+def compute_rpw(masses_a, masses_b, costs, delta=0.005):
+    rpw_guess = 0.5
+    range = 0.5
+
+    # Adding zero columns as the distances to the fake vertices
+    zeros_cols = torch.zeros((costs.shape[0], 1))
+    zeros_rows = torch.zeros((1, costs.shape[1] + 1))
+    costs = torch.cat((costs, zeros_cols), dim=-1)
+    costs = torch.cat((costs, zeros_rows), dim=0)
+
+    while range > delta:
+        # Adding fake vertices with rpw mass on them
+        m_a = torch.cat((masses_a, torch.FloatTensor([rpw_guess])))
+        m_b = torch.cat((masses_b, torch.FloatTensor([rpw_guess])))
+
+        pot = math.pow(ot.emd2(m_a, m_b, costs), 1/float(p))
+
+        range /= 2
+
+        if pot > k * rpw_guess:
+            rpw_guess += range
+        else:
+            rpw_guess -= range
+    return rpw_guess
 
 
 # initialization
@@ -54,13 +81,15 @@ for i in range(epoch_num):
     plans = torch.zeros((output_size, sample_size))
     for _ in range(batch_size):
         samples = sample(mean_x, mean_y, sample_size)
-        if i % 3 == 0:
+        if (i+1) % draw_interval == 0:
             draw_samples(samples, ax)
 
         cost_matrix = torch.cdist(out_centers, samples, p=2)
         cost_matrix = torch.pow(cost_matrix, p)
 
-        rpw = RPW(out_masses.tolist(), cost_matrix, k=k, p=p)
+        # rpw = RPW(out_masses.tolist(), cost_matrix, k=k, p=p)
+        rpw = compute_rpw(out_masses, torch.FloatTensor([1 / sample_size for _ in range(sample_size)]), cost_matrix)
+        # print(rpw, rpw_binary)
         
         # Adding fake vertices with rpw mass on them
         a = torch.cat((out_masses, torch.FloatTensor([rpw])))
@@ -99,11 +128,13 @@ for i in range(epoch_num):
         out_masses[torch.logical_and(out_masses>=0, out_masses<=1e-9)] = 1e-9
         out_masses = out_masses / torch.sum(out_masses)
 
-    if i % 3 == 0:
+    if (i+1) % draw_interval == 0:
         draw(out_centers, out_masses, ax, i + 1, path)
 
 with open(path + "results.txt", 'w') as f:
     f.write(str(compute_OT_error(out_masses, out_centers, mean_x, mean_y, sample_size)))
     f.write("\n")
-    f.write(str(out_centers))
     f.write("\n")
+    for center in out_centers:
+        f.write(str(float(center[0])) + " " + str(float(center[1])))
+        f.write("\n")
