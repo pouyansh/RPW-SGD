@@ -89,18 +89,29 @@ def draw(centers, masses, ax, epoch, path, colors=[], radius=0.02):
     plt.close()
 
 
-def compute_OT_error(out_masses, out_centers, n, sample_num=200):
+def compute_OT_error(out_masses, out_centers, n, sample_num=200, colors=[]):
     # Computing the accuracy
     total_error = 0
     for _ in range(sample_num):
         samples = sample(n, clean=True)
-        cost_matrix = torch.cdist(out_centers, samples, p=2)
-        cost_matrix = torch.pow(cost_matrix, 2)
-        b = [1 / n for _ in range(n)]
-        b = torch.FloatTensor(b)
-        total_error += math.sqrt(float(ot.emd2(out_masses, b, cost_matrix)))
+        if from_cifar10:
+            total_error += KL(colors, samples)
+        else:
+            cost_matrix = torch.cdist(out_centers, samples, p=2)
+            cost_matrix = torch.pow(cost_matrix, 2)
+            b = [1 / n for _ in range(n)]
+            b = torch.FloatTensor(b)
+            total_error += math.sqrt(float(ot.emd2(out_masses, b, cost_matrix)))
     avg_error = total_error / sample_num
     return avg_error
+
+
+def KL(a, b):
+    epsilon = 0.0001
+    a = np.asarray(torch.flatten(a).tolist()) + epsilon
+    b = np.asarray(torch.flatten(b).tolist()) + epsilon
+
+    return np.sum(a * np.log(a / b))
 
 
 X_train = None

@@ -11,13 +11,13 @@ dim = 2
 rows_num = 32  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
 sample_size = 900
-epoch_num = 300
+epoch_num = 30
 lr = 0.2  # learning rate
 p = 1
 batch_size = 5
-draw_interval = 1
+draw_interval = 10
 from_cifar10 = True
-beta = 3  # RGB significance in cifar10
+beta = 0.4  # RGB significance in cifar10
 
 path = "plots/run_"
 index = 0
@@ -93,10 +93,9 @@ out_masses = torch.ones(out_centers.shape[0]) / out_centers.shape[0]
 
 
 with open(path + "results.txt", 'w') as f:
-    if not from_cifar10:
-        f.write(str(compute_OT_error(out_masses, out_centers, sample_size)))
-        f.write("\n")
-        f.write("\n")
+    f.write(str(compute_OT_error(out_masses, out_centers, sample_size, colors=colors)))
+    f.write("\n")
+    f.write("\n")
     for center in out_centers:
         f.write(str(float(center[0])) + " " + str(float(center[1])))
         f.write("\n")
