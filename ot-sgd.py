@@ -12,12 +12,12 @@ rows_num = 32  # the code will generate a square of rows_num x rows_num and then
 output_size = int(math.pow(rows_num, dim))
 sample_size = 900
 epoch_num = 300
-lr = 0.5  # learning rate
-p = 2
+lr = 0.2  # learning rate
+p = 1
 batch_size = 5
 draw_interval = 1
 from_cifar10 = True
-beta = 0.3  # RGB significance in cifar10
+beta = 3  # RGB significance in cifar10
 
 path = "plots/run_"
 index = 0
@@ -27,7 +27,7 @@ with open("plots/index.txt", 'w') as f:
     f.write(str(index + 1))
 path += str(index) + "_ot_lr" + str(lr) + "_p" + str(p) + "_bs" + str(batch_size) 
 if from_cifar10:
-    path += "_cifar10"
+    path += "_cifar10_beta" + str(beta)
 path += "/"
 if not os.path.exists(path):
     os.makedirs(path, exist_ok=True)

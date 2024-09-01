@@ -13,14 +13,14 @@ rows_num = 32  # the code will generate a square of rows_num x rows_num and then
 output_size = int(math.pow(rows_num, dim))
 sample_size = output_size
 epoch_num = 100
-lr = 0.5  # learning rate
+lr = 0.2  # learning rate
 k = 1
-p = 2
+p = 1
 batch_size = 5
 no_mass_reduce = True
 draw_interval = 1
 from_cifar10 = True
-beta = 0.5  # RGB significance in cifar10
+beta = 3  # RGB significance in cifar10
 
 # Creating folder to save figures
 path = "plots/run_"
@@ -33,7 +33,7 @@ path += str(index) + "_rpw_lr" + str(lr) + "_k" + str(k) + "_p" + str(p) + "_bs"
 if no_mass_reduce:
     path += "_cmass"
 if from_cifar10:
-    path += "_cifar10"
+    path += "_cifar10_beta" + str(beta)
 path += "/"
 if not os.path.exists(path):
     os.makedirs(path, exist_ok=True)
