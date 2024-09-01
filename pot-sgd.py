@@ -5,7 +5,6 @@ import random
 import ot # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
-from rpw import RPW
 from utils import sample, draw, draw_samples, compute_OT_error
 
 dim = 2
@@ -15,11 +14,11 @@ sample_size = 900
 epoch_num = 300
 lr = 0.1  # learning rate
 p = 2
-margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 batch_size = 5
 alpha = 0.2  # the parameter in alpha-partial
 no_mass_reduce = True 
 draw_interval = 20
+from_cifar10 = True
 
 # Creating folder to save figures
 path = "plots/run_"
@@ -31,6 +30,8 @@ with open("plots/index.txt", 'w') as f:
 path += str(index) + "_pot_lr" + str(lr) + "_alpha" + str(alpha) + "_p" + str(p) + "_bs" + str(batch_size)
 if no_mass_reduce:
     path += "_cmass"
+if from_cifar10:
+    path += "_cifar10"
 path += "/"
 if not os.path.exists(path):
     os.makedirs(path, exist_ok=True)
@@ -41,10 +42,6 @@ centers = [[int(i / rows_num) + 0.5, i % rows_num + 0.5] for i in range(output_s
 out_centers = torch.FloatTensor(centers) / rows_num
 out_masses = torch.ones(output_size) / output_size
 
-# distribution to learn
-mean_x = random.random() * (1 - 2 * margin) + margin
-mean_y = random.random() * (1 - 2 * margin) + margin
-
 _, ax = plt.subplots()
 draw(out_centers, out_masses, ax, 0, path)
 
@@ -54,7 +51,7 @@ for i in range(epoch_num):
     arrows = torch.zeros((output_size, dim))
     plans = torch.zeros((output_size, sample_size))
     for _ in range(batch_size):
-        samples = sample(mean_x, mean_y, sample_size)
+        samples = sample(sample_size)
         if (i+1) % draw_interval == 0:
             draw_samples(samples, ax)
 
@@ -101,7 +98,7 @@ for i in range(epoch_num):
         draw(out_centers, out_masses, ax, i + 1, path)
 
 with open(path + "results.txt", 'w') as f:
-    f.write(str(compute_OT_error(out_masses, out_centers, mean_x, mean_y, sample_size)))
+    f.write(str(compute_OT_error(out_masses, out_centers, sample_size)))
     f.write("\n")
     f.write("\n")
     for center in out_centers:

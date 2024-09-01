@@ -12,15 +12,16 @@ min_alpha = 0
 
 cov = [[0.01, 0], [0, 0.01]]
 noise_cov = [[0.05, 0], [0, 0.05]]
+margin = 0.1  # min dist of the center of the normal distribution from the boundaries of the unit squares 
 
 digit = 6
-from_mnist = True
+from_mnist = False
 
 label = 7
-from_cifar10 = False
+from_cifar10 = True
 
 # This method draws n samples from the real distribution contaminated with alpha fraction of noise
-def sample(mean_x, mean_y, n, clean=False):
+def sample(n, clean=False, beta=0.3):
     samples = []
 
     if clean:
@@ -31,6 +32,12 @@ def sample(mean_x, mean_y, n, clean=False):
     X = None
     if from_mnist or from_cifar10:
         X = random.choice(X_train)
+        if from_cifar10:
+            points = [[X[int(i / X.shape[1])][i % X.shape[1]][0], 
+                       X[int(i / X.shape[1])][i % X.shape[1]][1], 
+                       X[int(i / X.shape[1])][i % X.shape[1]][2]] 
+                      for i in range(X.shape[0] * X.shape[1])]
+            return torch.FloatTensor(points) * beta / 256
         X = X / np.sum(X)
 
     # random noise distribution
@@ -66,20 +73,27 @@ def draw_samples(real_samples, ax, radius=0.01):
 
 
 # Drawing the maintained output distribution
-def draw(centers, masses, ax, epoch, path, radius=0.02):
-    temp_masses = masses * 0.75 / torch.max(masses)
+def draw(centers, masses, ax, epoch, path, colors=[], radius=0.02):
+    alpha = 0.75
+    if from_cifar10:
+        alpha = 1
+    temp_masses = masses * alpha / torch.max(masses)
     for i in range(centers.shape[0]):
-        circle = plt.Circle((centers[i][1], 1 - centers[i][0]), radius, color='k', alpha=float(temp_masses[i]))
+        if not from_cifar10:
+            circle = plt.Circle((centers[i][1], 1 - centers[i][0]), radius, color='k', alpha=float(temp_masses[i]))
+        else:
+            circle = plt.Circle((centers[i][1], 1 - centers[i][0]), radius, 
+                                color=(colors[i][0], colors[i][1], colors[i][2]), alpha=float(temp_masses[i]))
         ax.add_patch(circle)
     plt.savefig(path + "fig" + str(epoch) + ".png")
     plt.close()
 
 
-def compute_OT_error(out_masses, out_centers, mean_x, mean_y, n, sample_num=200):
+def compute_OT_error(out_masses, out_centers, n, sample_num=200):
     # Computing the accuracy
     total_error = 0
     for _ in range(sample_num):
-        samples = sample(mean_x, mean_y, n, clean=True)
+        samples = sample(n, clean=True)
         cost_matrix = torch.cdist(out_centers, samples, p=2)
         cost_matrix = torch.pow(cost_matrix, 2)
         b = [1 / n for _ in range(n)]
@@ -90,6 +104,9 @@ def compute_OT_error(out_masses, out_centers, mean_x, mean_y, n, sample_num=200)
 
 
 X_train = None
+# distribution to learn
+mean_x = random.random() * (1 - 2 * margin) + margin
+mean_y = random.random() * (1 - 2 * margin) + margin
 if from_mnist:
     (X_train, labels), (_, _) = keras.datasets.mnist.load_data()
     train_filter = np.where((labels == digit))
