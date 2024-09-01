@@ -18,9 +18,9 @@ k = 1
 p = 1
 batch_size = 5
 no_mass_reduce = True
-draw_interval = 1
+draw_interval = 10
 from_cifar10 = True
-beta = 3  # RGB significance in cifar10
+beta = 0.1  # RGB significance in cifar10
 
 # Creating folder to save figures
 path = "plots/run_"
@@ -150,10 +150,9 @@ for i in range(epoch_num):
         draw(out_centers, out_masses, ax, i + 1, path, colors=c)
 
 with open(path + "results.txt", 'w') as f:
-    if not from_cifar10:
-        f.write(str(compute_OT_error(out_masses, out_centers, sample_size)))
-        f.write("\n")
-        f.write("\n")
+    f.write(str(compute_OT_error(out_masses, out_centers, sample_size, colors=colors)))
+    f.write("\n")
+    f.write("\n")
     for center in out_centers:
         f.write(str(float(center[0])) + " " + str(float(center[1])))
         f.write("\n")

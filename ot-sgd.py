@@ -11,13 +11,13 @@ dim = 2
 rows_num = 32  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
 sample_size = 900
-epoch_num = 30
+epoch_num = 300
 lr = 0.2  # learning rate
 p = 1
 batch_size = 5
 draw_interval = 10
 from_cifar10 = True
-beta = 0.4  # RGB significance in cifar10
+beta = 0.1  # RGB significance in cifar10
 
 path = "plots/run_"
 index = 0
