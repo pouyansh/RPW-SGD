@@ -11,13 +11,14 @@ dim = 2
 rows_num = 32  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
 sample_size = 900
-epoch_num = 300
+epoch_num = 100
 lr = 0.2  # learning rate
-p = 1
+p = 2
 batch_size = 5
-draw_interval = 10
+draw_interval = 1
 from_cifar10 = True
-beta = 0.1  # RGB significance in cifar10
+moving = True
+beta = 5  # RGB significance in cifar10
 
 path = "plots/run_"
 index = 0
@@ -36,6 +37,7 @@ if not os.path.exists(path):
 # initialization
 centers = [[int(i / rows_num) + 0.5, i % rows_num + 0.5] for i in range(output_size)]
 out_centers = torch.FloatTensor(centers) / rows_num
+const_centers = torch.FloatTensor(centers) / rows_num
 colors = torch.FloatTensor([[beta, beta, beta] for _ in range(output_size)]) / 2
 
 _, ax = plt.subplots()
@@ -46,17 +48,15 @@ draw(out_centers, torch.ones(output_size) / output_size, ax, 0, path, colors=c)
 for i in range(epoch_num):
     plt.close()
     _, ax = plt.subplots()
-    if from_cifar10:
-        arrows = torch.zeros((output_size, 3))
-    else:
-        arrows = torch.zeros((output_size, dim))
+    arrows = torch.zeros((output_size, dim))
+    arrows_colors = torch.zeros((output_size, 3))
     for _ in range(batch_size):
         samples = sample(sample_size, beta=beta)
         if (i+1) % draw_interval == 0 and not from_cifar10:
             draw_samples(samples, ax)
         
         if from_cifar10:
-            samples = torch.cat((out_centers, samples), dim=1)
+            samples = torch.cat((const_centers, samples), dim=1)
             points = torch.cat((out_centers, colors), dim=1)
         else:
             points = out_centers
@@ -70,17 +70,19 @@ for i in range(epoch_num):
         plan = plan.shape[0] * plan
 
         if from_cifar10:
-            arrows = arrows + torch.matmul(plan, samples)[:, [2, 3, 4]] - colors
+            arrows_colors = arrows_colors + torch.matmul(plan, samples)[:, [2, 3, 4]] - colors
+            arrows = arrows + torch.matmul(plan, samples)[:, [0, 1]] - out_centers
         else:
             arrows = arrows + torch.matmul(plan, samples) - out_centers
 
     # Averaging the arrows computed for each sample
     arrows = arrows / batch_size
+    arrows_colors = arrows_colors / batch_size
 
     if from_cifar10:
-        colors = colors + lr * arrows
-        colors[colors < 0] = 0
-        colors[colors > beta] = beta
+        colors = colors + lr * arrows_colors
+        if moving:
+            out_centers = out_centers + lr * arrows
     else:
         out_centers = out_centers + lr * arrows
 
@@ -93,9 +95,14 @@ out_masses = torch.ones(out_centers.shape[0]) / out_centers.shape[0]
 
 
 with open(path + "results.txt", 'w') as f:
-    f.write(str(compute_OT_error(out_masses, out_centers, sample_size, colors=colors)))
+    f.write(str(compute_OT_error(out_masses, out_centers, sample_size, colors=colors, p=p)))
     f.write("\n")
     f.write("\n")
-    for center in out_centers:
-        f.write(str(float(center[0])) + " " + str(float(center[1])))
-        f.write("\n")
+    if from_cifar10:
+        for color in colors:
+            f.write(str(float(color[0])) + " " + str(float(color[1])) + " " + str(float(color[2])))
+            f.write("\n")
+    else:
+        for center in out_centers:
+            f.write(str(float(center[0])) + " " + str(float(center[1])))
+            f.write("\n")

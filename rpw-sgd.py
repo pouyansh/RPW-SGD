@@ -6,21 +6,22 @@ import ot # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
 from rpw import RPW
-from utils import sample, draw, draw_samples, compute_OT_error
+from utils import sample, draw, draw_samples, compute_OT_error, compute_rpw
 
 dim = 2
 rows_num = 32  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
 sample_size = output_size
 epoch_num = 100
-lr = 0.2  # learning rate
+lr = 0.5  # learning rate
 k = 1
-p = 1
+p = 2
 batch_size = 5
 no_mass_reduce = True
-draw_interval = 10
+moving = True
+draw_interval = 2
 from_cifar10 = True
-beta = 0.1  # RGB significance in cifar10
+beta = 5  # RGB significance in cifar10
 
 # Creating folder to save figures
 path = "plots/run_"
@@ -34,40 +35,16 @@ if no_mass_reduce:
     path += "_cmass"
 if from_cifar10:
     path += "_cifar10_beta" + str(beta)
+    if moving:
+        path += "_moving"
 path += "/"
 if not os.path.exists(path):
     os.makedirs(path, exist_ok=True)
 
-
-def compute_rpw(masses_a, masses_b, costs, delta=0.005):
-    rpw_guess = 0.5
-    range = 0.5
-
-    # Adding zero columns as the distances to the fake vertices
-    zeros_cols = torch.zeros((costs.shape[0], 1))
-    zeros_rows = torch.zeros((1, costs.shape[1] + 1))
-    costs = torch.cat((costs, zeros_cols), dim=-1)
-    costs = torch.cat((costs, zeros_rows), dim=0)
-
-    while range > delta:
-        # Adding fake vertices with rpw mass on them
-        m_a = torch.cat((masses_a, torch.FloatTensor([rpw_guess])))
-        m_b = torch.cat((masses_b, torch.FloatTensor([rpw_guess])))
-
-        pot = math.pow(ot.emd2(m_a, m_b, costs), 1/float(p))
-
-        range /= 2
-
-        if pot > k * rpw_guess:
-            rpw_guess += range
-        else:
-            rpw_guess -= range
-    return rpw_guess
-
-
 # initialization
 centers = [[int(i / rows_num) + 0.5, i % rows_num + 0.5] for i in range(output_size)]
 out_centers = torch.FloatTensor(centers) / rows_num
+const_centers = torch.FloatTensor(centers) / rows_num
 out_masses = torch.ones(output_size) / output_size
 colors = torch.FloatTensor([[beta, beta, beta] for _ in range(output_size)]) / 2
 
@@ -79,27 +56,23 @@ draw(out_centers, out_masses, ax, 0, path, colors=c)
 for i in range(epoch_num):
     plt.close()
     _, ax = plt.subplots()
-    if from_cifar10:
-        arrows = torch.zeros((output_size, 3))
-    else:
-        arrows = torch.zeros((output_size, dim))
+    arrows = torch.zeros((output_size, dim))
+    arrows_colors = torch.zeros((output_size, 3))
     plans = torch.zeros((output_size, sample_size))
     for _ in range(batch_size):
         samples = sample(sample_size, beta=beta)
-        if (i+1) % draw_interval == 0:
+        if (i+1) % draw_interval == 0 and not from_cifar10:
             draw_samples(samples, ax)
 
         if from_cifar10:
-            samples = torch.cat((out_centers, samples), dim=1)
+            samples = torch.cat((const_centers, samples), dim=1)
             points = torch.cat((out_centers, colors), dim=1)
         else:
             points = out_centers
         cost_matrix = torch.cdist(points, samples, p=2)
         cost_matrix = torch.pow(cost_matrix, p)
 
-        # rpw = RPW(out_masses.tolist(), cost_matrix, k=k, p=p)
-        rpw = compute_rpw(out_masses, torch.FloatTensor([1 / samples.shape[0] for _ in range(samples.shape[0])]), cost_matrix)
-        # print(rpw, rpw_binary)
+        rpw = compute_rpw(out_masses, torch.FloatTensor([1 / samples.shape[0] for _ in range(samples.shape[0])]), cost_matrix, k=k, p=p)
         
         # Adding fake vertices with rpw mass on them
         a = torch.cat((out_masses, torch.FloatTensor([rpw])))
@@ -126,16 +99,20 @@ for i in range(epoch_num):
         plans = plans + plan
 
         if from_cifar10:
-            arrows = arrows + torch.matmul(plan, samples)[:, [2, 3, 4]] - torch.matmul(torch.diag_embed(torch.sum(plan, dim=1)), colors)
+            arrows = arrows + torch.matmul(plan, samples)[:, [0, 1]] - torch.matmul(torch.diag_embed(torch.sum(plan, dim=1)), out_centers)
+            arrows_colors = arrows_colors + torch.matmul(plan, samples)[:, [2, 3, 4]] - torch.matmul(torch.diag_embed(torch.sum(plan, dim=1)), colors)
         else:
             arrows = arrows + torch.matmul(plan, samples) - torch.matmul(torch.diag_embed(torch.sum(plan, dim=1)), out_centers)
         
     # Averaging the plans and arrows computed for each sample
     plans = plans / batch_size
     arrows = arrows / batch_size
+    arrows_colors = arrows_colors / batch_size
 
     if from_cifar10:
-        colors = colors + lr * torch.div(arrows.T, out_masses).T
+        colors = colors + lr * torch.div(arrows_colors.T, out_masses).T
+        if moving:
+            out_centers = out_centers + lr * torch.div(arrows.T, out_masses).T
     else:
         out_centers = out_centers + lr * torch.div(arrows.T, out_masses).T
 
@@ -150,9 +127,14 @@ for i in range(epoch_num):
         draw(out_centers, out_masses, ax, i + 1, path, colors=c)
 
 with open(path + "results.txt", 'w') as f:
-    f.write(str(compute_OT_error(out_masses, out_centers, sample_size, colors=colors)))
+    f.write(str(compute_OT_error(out_masses, out_centers, sample_size, colors=colors, p=p)))
     f.write("\n")
     f.write("\n")
-    for center in out_centers:
-        f.write(str(float(center[0])) + " " + str(float(center[1])))
-        f.write("\n")
+    if from_cifar10:
+        for color in colors:
+            f.write(str(float(color[0])) + " " + str(float(color[1])) + " " + str(float(color[2])))
+            f.write("\n")
+    else:
+        for center in out_centers:
+            f.write(str(float(center[0])) + " " + str(float(center[1])))
+            f.write("\n")

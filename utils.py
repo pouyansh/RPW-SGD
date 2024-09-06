@@ -19,6 +19,34 @@ from_mnist = False
 
 label = 7
 from_cifar10 = True
+moving = True
+
+
+def compute_rpw(masses_a, masses_b, costs, k=1, p=1, delta=0.00001):
+    rpw_guess = 0.5
+    range = 0.5
+
+    # Adding zero columns as the distances to the fake vertices
+    zeros_cols = torch.zeros((costs.shape[0], 1))
+    zeros_rows = torch.zeros((1, costs.shape[1] + 1))
+    costs = torch.cat((costs, zeros_cols), dim=-1)
+    costs = torch.cat((costs, zeros_rows), dim=0)
+
+    while range > delta:
+        # Adding fake vertices with rpw mass on them
+        m_a = torch.cat((masses_a, torch.FloatTensor([rpw_guess])))
+        m_b = torch.cat((masses_b, torch.FloatTensor([rpw_guess])))
+
+        pot = math.pow(ot.emd2(m_a, m_b, costs, numItermax=1000000), 1/float(p))
+
+        range /= 2
+
+        if pot > k * rpw_guess:
+            rpw_guess += range
+        else:
+            rpw_guess -= range
+    return rpw_guess
+
 
 # This method draws n samples from the real distribution contaminated with alpha fraction of noise
 def sample(n, clean=False, beta=0.3):
@@ -89,27 +117,40 @@ def draw(centers, masses, ax, epoch, path, colors=[], radius=0.02):
     plt.close()
 
 
-def compute_OT_error(out_masses, out_centers, n, sample_num=200, colors=[]):
+def compute_OT_error(out_masses, out_centers, n, sample_num=200, colors=[], p=2):
     # Computing the accuracy
     total_error = 0
     for _ in range(sample_num):
         samples = sample(n, clean=True)
         if from_cifar10:
-            total_error += KL(colors, samples)
+            if not moving:
+                total_error += KL(colors, samples)
+            else:
+                rows_num = 32
+                centers = torch.FloatTensor([[int(i / rows_num) + 0.5, i % rows_num + 0.5] for i in range(rows_num ** 2)]) / rows_num
+                samples = torch.cat((centers, samples), dim=1)
+                points = torch.cat((out_centers, colors), dim=1)
+
+                cost_matrix = torch.cdist(points, samples, p=2)
+                cost_matrix = torch.pow(cost_matrix, p)
+                b = torch.ones(samples.shape[0]) / samples.shape[0]
+                total_error += math.pow(float(ot.emd2(out_masses, b, cost_matrix)), 1/p)
         else:
             cost_matrix = torch.cdist(out_centers, samples, p=2)
             cost_matrix = torch.pow(cost_matrix, 2)
             b = [1 / n for _ in range(n)]
             b = torch.FloatTensor(b)
-            total_error += math.sqrt(float(ot.emd2(out_masses, b, cost_matrix)))
+            total_error += math.pow(float(ot.emd2(out_masses, b, cost_matrix)), 1/p)
     avg_error = total_error / sample_num
     return avg_error
 
 
 def KL(a, b):
-    epsilon = 0.0001
+    epsilon = 0.00001
     a = np.asarray(torch.flatten(a).tolist()) + epsilon
+    a = a / np.sum(a)
     b = np.asarray(torch.flatten(b).tolist()) + epsilon
+    b = b / np.sum(b)
 
     return np.sum(a * np.log(a / b))
 
