@@ -20,6 +20,7 @@ from_cifar10 = True
 moving = True
 beta = 5  # RGB significance in cifar10
 
+# Creating path to store plots
 path = "plots/run_"
 index = 0
 with open("plots/index.txt", 'r') as f:

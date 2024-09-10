@@ -6,8 +6,9 @@ import torch # type: ignore
 import ot # type: ignore
 import math
 from tqdm import tqdm # type: ignore
+import random
 
-from utils import compute_rpw, sample
+from utils import compute_rpw
 
 label = 7
 betas = [0.3, 1, 3]
@@ -25,6 +26,15 @@ with open("plots/index.txt", 'w') as f:
 path += str(index) + "_rpw_cifar_test" + str(label) + "_p" + str(p) + "/"
 if not os.path.exists(path):
     os.makedirs(path, exist_ok=True)
+
+
+def sample():
+    X = random.choice(X_train)    
+    points = [[X[int(i / X.shape[1])][i % X.shape[1]][0], 
+                X[int(i / X.shape[1])][i % X.shape[1]][1], 
+                X[int(i / X.shape[1])][i % X.shape[1]][2]] 
+                for i in range(X.shape[0] * X.shape[1])]
+    return torch.FloatTensor(points) * beta / 256
 
 
 centers = [[int(i / rows_num) + 0.5, i % rows_num + 0.5] for i in range(rows_num ** 2)]
@@ -92,3 +102,14 @@ for i in tqdm(range(10)):
     plt.axis('off')
     plt.savefig(path + "fig" + str(i) + ".png", bbox_inches='tight')
     plt.close()
+
+
+if os.path.exists('./data/cifar10.npy'):
+    X_train = np.load('./data/cifar10.npy')
+    labels = np.load('./data/cifar10_labels.npy').ravel().astype(int)
+else:
+    (X_train, labels), (_, _) = keras.datasets.cifar10.load_data()
+    np.save('./data/cifar10.npy', X_train)
+    np.save('./data/cifar10_labels.npy', labels)
+train_filter = np.where((labels == label))
+X_train = X_train[train_filter]
