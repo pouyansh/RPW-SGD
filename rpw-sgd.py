@@ -3,8 +3,9 @@ import os
 import sys
 import ot # type: ignore
 import matplotlib.pyplot as plt # type: ignore
+from tqdm import tqdm # type: ignore
 
-from utils import sample, draw, draw_samples, compute_OT_error, compute_rpw
+from utils import *
 from constants import *
 
 # method = rpw / ot
@@ -55,7 +56,7 @@ out_masses = torch.ones(output_size) / output_size
 _, ax = plt.subplots()
 draw(out_centers, out_masses, ax, 0, path)
 
-for i in range(epoch_num):
+for i in tqdm(range(epoch_num)):
     plt.close()
     _, ax = plt.subplots()
 
@@ -83,9 +84,9 @@ for i in range(epoch_num):
         
             # Adding fake vertices with rpw mass on them
             a = torch.cat((out_masses, torch.FloatTensor([rpw])))
-            b = [1 / samples.shape[0] for _ in range(samples.shape[0])]
-            b.append(rpw)
-            b = torch.FloatTensor(b)
+            m = samples.shape[0]
+            b = torch.ones(m + 1) / m
+            b[-1] = rpw
 
             # Adding zero columns as the distances to the fake vertices
             zeros_cols = torch.zeros((cost_matrix.shape[0], 1))
@@ -119,7 +120,7 @@ for i in range(epoch_num):
     plans = plans / batch_size
     arrows = arrows / batch_size
 
-    out_centers = out_centers + lr * torch.div(arrows.T, out_masses).T
+    out_centers = out_centers + lr * arrows
 
     if not no_mass_reduce:
         out_masses = torch.sum(plans, 1)
@@ -128,6 +129,7 @@ for i in range(epoch_num):
 
     if (i+1) % draw_interval == 0:
         draw(out_centers, out_masses, ax, i + 1, path)
+
 
 with open(path + "results.txt", 'w') as f:
     f.write(str(compute_OT_error(out_masses, out_centers, sample_size, p=p)))

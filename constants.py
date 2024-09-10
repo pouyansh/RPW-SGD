@@ -10,10 +10,10 @@ batch_size = 5
 lr = 0.1  # learning rate
 
 from_mnist = True
-digit = 6
+digit = 9
 no_mass_reduce = True
 
-draw_interval = 2
+draw_interval = 10
 
 max_alpha = 0.4  # maximum amount of noise in each sample
 min_alpha = 0

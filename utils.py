@@ -38,19 +38,19 @@ def compute_rpw(masses_a, masses_b, costs, k=1, p=1, delta=0.00001):
 # This method draws n samples from the real distribution contaminated with alpha fraction of noise
 def sample(n, clean=False):
     samples = []
+    cov = [[0.01, 0], [0, 0.01]]
 
-    if clean:
+    alpha = random.random() * (max_alpha - min_alpha) + min_alpha  # amount of noise in the samples
+    if clean: 
         alpha = 0
-    else:
-        alpha = random.random() * (max_alpha - min_alpha) + min_alpha  # amount of noise in the samples
 
-    X = None
-    if from_mnist:
-        X = random.choice(X_train)
+    X = random.choice(X_train)
+    X = X / np.sum(X)
 
     # random noise distribution
     noise_mean_x = random.random()
     noise_mean_y = random.random()
+    noise_cov = [[0.05, 0], [0, 0.05]]
 
     for _ in range(n):
         p = random.random()
@@ -61,12 +61,12 @@ def sample(n, clean=False):
                     flat = X.flatten()
                     sample_index = np.random.choice(a=flat.size, p=flat)
                     point = np.divide(np.unravel_index(sample_index, X.shape), X.shape[0])
-                point = np.random.multivariate_normal([mean_x, mean_y], cov, 1)[0]
+                else:
+                    point = np.random.multivariate_normal([mean_x, mean_y], cov, 1)[0]
         else:
             while point[0] < 0 or point[0] > 1 or point[1] < 0 or point[1] > 1:
                 point = np.random.multivariate_normal([noise_mean_x, noise_mean_y], noise_cov, 1)[0]
         samples.append(point)
-    samples = np.array(samples)
     return torch.FloatTensor(samples)
 
 
