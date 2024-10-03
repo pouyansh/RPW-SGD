@@ -22,7 +22,7 @@ else:
 
 # parameter k in (p,k)-RPW
 if len(sys.argv) >= 4:  
-    k = int(sys.argv[3])
+    k = float(sys.argv[3])
 else:
     k = 1
 
@@ -67,8 +67,8 @@ for i in tqdm(range(epoch_num)):
     # epochs
     for _ in range(batch_size):
         samples = sample(sample_size)
-        if (i+1) % draw_interval == 0:
-            draw_samples(samples, ax)
+        # if (i+1) % draw_interval == 0:
+        #     draw_samples(samples, ax)
 
         points = out_centers
 
@@ -78,7 +78,7 @@ for i in tqdm(range(epoch_num)):
 
         # Computing (p, k)-rpw
         rpw = 0
-        if method == rpw:
+        if method == "rpw":
             m = samples.shape[0]
             rpw = compute_rpw(out_masses, torch.ones(m) / m, cost_matrix, k=k, p=p)
         
@@ -120,7 +120,10 @@ for i in tqdm(range(epoch_num)):
     plans = plans / batch_size
     arrows = arrows / batch_size
 
-    out_centers = out_centers + lr * arrows
+    if method != "rpw":
+        out_centers = out_centers + lr * arrows
+    else:
+        out_centers = out_centers + lr * torch.div(arrows.T, out_masses).T
 
     if not no_mass_reduce:
         out_masses = torch.sum(plans, 1)

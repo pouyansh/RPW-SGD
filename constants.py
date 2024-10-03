@@ -5,18 +5,18 @@ rows_num = 32  # the code will generate a square of rows_num x rows_num and then
 output_size = int(math.pow(rows_num, dim))
 sample_size = output_size
 
-epoch_num = 100
+epoch_num = 300
 batch_size = 5
 lr = 0.1  # learning rate
 
 from_mnist = True
-digit = 9
+digit = 7
 no_mass_reduce = True
 
-draw_interval = 10
+draw_interval = 50
 
 max_alpha = 0.4  # maximum amount of noise in each sample
-min_alpha = 0
+min_alpha = 0.1
 
 cov = [[0.01, 0], [0, 0.01]]
 noise_cov = [[0.05, 0], [0, 0.05]]

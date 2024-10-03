@@ -9,7 +9,7 @@ import math
 from constants import *
 
 
-def compute_rpw(masses_a, masses_b, costs, k=1, p=1, delta=0.00001):
+def compute_rpw(masses_a, masses_b, costs, k=1, p=1, delta=0.001):
     rpw_guess = 0.5
     range = 0.5
 
