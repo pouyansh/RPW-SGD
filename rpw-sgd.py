@@ -131,7 +131,10 @@ for i in tqdm(range(epoch_num)):
         out_masses = out_masses / torch.sum(out_masses)
 
     if (i+1) % draw_interval == 0:
-        draw(out_centers, out_masses, ax, i + 1, path)
+        if from_mnist:
+            draw_digits(out_centers, out_masses, i+1, path)
+        else:
+            draw(out_centers, out_masses, ax, i + 1, path)
 
 
 with open(path + "results.txt", 'w') as f:

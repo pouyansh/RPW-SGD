@@ -10,7 +10,7 @@ batch_size = 5
 lr = 0.1  # learning rate
 
 from_mnist = True
-digit = 7
+digit = 6
 no_mass_reduce = True
 
 draw_interval = 50

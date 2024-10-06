@@ -87,6 +87,14 @@ def draw(centers, masses, ax, epoch, path, colors=[], radius=0.02):
     plt.savefig(path + "fig" + str(epoch) + ".png")
     plt.close()
 
+def draw_digits(centers, masses, epoch, path):
+    image = [[0 for _ in range(28)] for _ in range(28)]
+    for i in range(centers.shape[0]):
+        image[math.floor(centers[i][0] * 28)][math.floor(centers[i][1] * 28)] += masses[i]
+    plt.imshow(image, cmap='gray')
+    plt.savefig(path + "fig" + str(epoch) + ".png")
+    plt.close()
+
 
 def compute_OT_error(out_masses, out_centers, n, sample_num=200, colors=[], p=2):
     # Computing the accuracy
