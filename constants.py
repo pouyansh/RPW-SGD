@@ -1,12 +1,12 @@
 import math
 
 dim = 2
-rows_num = 32  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
+rows_num = 28  # the code will generate a square of rows_num x rows_num and then tries to adjust their coordinates
 output_size = int(math.pow(rows_num, dim))
 sample_size = output_size
 
-epoch_num = 300
-batch_size = 5
+epoch_num = 150
+batch_size = 10
 lr = 0.1  # learning rate
 
 from_mnist = True
