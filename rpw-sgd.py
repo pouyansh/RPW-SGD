@@ -4,6 +4,7 @@ import sys
 import ot  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from tqdm import tqdm  # type: ignore
+import keras  # type: ignore
 
 from utils import *
 from constants import *

@@ -2,7 +2,6 @@ import random
 import numpy as np  # type: ignore
 import torch  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
-import keras  # type: ignore
 import ot  # type: ignore
 import math
 
@@ -110,7 +109,9 @@ def draw_digits(centers, masses, epoch, path):
     plt.close()
 
 
-def compute_OT_error(out_masses, out_centers, n, sample_num=200, p=2, data=[], mean_x=0, mean_y=0):
+def compute_OT_error(
+    out_masses, out_centers, n, sample_num=200, p=2, data=[], mean_x=0, mean_y=0
+):
     # Computing the accuracy
     total_error = 0
     for _ in range(sample_num):
@@ -126,9 +127,35 @@ def compute_OT_error(out_masses, out_centers, n, sample_num=200, p=2, data=[], m
 
 def KL(a, b):
     epsilon = 0.00001
-    a = np.asarray(torch.flatten(a).tolist()) + epsilon
-    a = a / np.sum(a)
-    b = np.asarray(torch.flatten(b).tolist()) + epsilon
+    a += epsilon
+    a = a.reshape(28 * 28) / np.sum(a)
+    b = np.asarray(b.reshape(28 * 28), dtype="float64") + epsilon
     b = b / np.sum(b)
 
-    return np.sum(a * np.log(a / b))
+    cost_matrix = np.array(
+        [
+            [(i - k) ** 2 + (j - l) ** 2 for i in range(28) for j in range(28)]
+            for k in range(28)
+            for l in range(28)
+        ]
+    ) / 28 ** 2 / 2
+    return np.sum(a * np.log(a / b)), math.pow(float(ot.emd2(a, b, cost_matrix)), 1 / 2)
+
+
+def compute_KL_error(data, centers, masses):
+    data = random.choices(data, k=500)
+    image = [[0 for _ in range(28)] for _ in range(28)]
+    for i in range(centers.shape[0]):
+        image[math.floor(centers[i][0] * 28)][math.floor(centers[i][1] * 28)] += masses[
+            i
+        ]
+    image = np.array(image)
+    total_kl, total_ot = 0, 0
+    counter = 0
+    for d in data:
+        kl, ot = KL(image, d)
+        total_kl += kl
+        total_ot += ot
+        print(counter, len(data))
+        counter += 1
+    return total_kl / len(data), total_ot / len(data)
